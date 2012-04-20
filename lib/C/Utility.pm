@@ -31,26 +31,37 @@ require Exporter;
 use warnings;
 use strict;
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 use Carp;
 use File::Spec;
+
+=head1 DESCRIPTION
+
+This module was released to CPAN as a helper module for
+L<C::Template>. It contains simple functions which assist in automatic
+generation of C programs.
+
+=head1 FUNCTIONS
 
 =head2  convert_to_c_string
 
    my $c_string = convert_to_c_string ($perl_string);
 
-Convert a piece of text into a C string. Converts
+This converts a Perl string into a C string. For example, it converts
 
     my $string =<<EOF;
     The quick "brown" fox
-    jumped over the lazy dog-a-roon.
+    jumped over the lazy dog.
     EOF
 
 into
 
     "The quick \"brown\" fox\n"
-    "jumped over the lazy dog-a-roon.\n"
+    "jumped over the lazy dog.\n"
+
+It also removes backslashes from before the @ symbol, so \@ is
+transformed to @.
 
 =cut
 
@@ -62,25 +73,18 @@ sub convert_to_c_string
     }
     # Convert backslashes to double backslashes.
     $text =~ s/\\/\\\\/g;
-#    print "$text\n";
     # Escape double quotes
     $text = escape_string ($text);
-#    print "$text\n";
     # Undo damage
     $text =~ s/\\\\"/\\"/g;
-#    print "$text\n";
-    # Not Perl
+    # Remove backslashes from before the @ symbol.
     $text =~ s/\\\@/@/g;
-#    print "$text\n";
     # Turn each line into a string
     $text =~ s/(.*)\n/"$1\\n"\n/gm;
-#    print "$text\n";
     # Catch a final line without any \n at its end.
-    # \" is for cperl-mode. # BKB 2009-10-05 13:40:08
     if ($text !~ /\\n\"$/) {
 	$text =~ s/(.+)$/"$1"/g;
     }
-#    print "$text\n";
     return $text;
 }
 
@@ -89,7 +93,8 @@ sub convert_to_c_string
     my $c_string = convert_to_c_pc ($string);     
 
 As L</convert_to_c> but also with % (the percent character) converted
-to double-percent, for use in C format strings.
+to a double percent, %%. This is for generating strings which may be
+used as C format strings.
 
 =cut
 
@@ -120,7 +125,7 @@ sub escape_string
     my $h_file = c_to_h_name ("frog.c");
     # $h_file = "frog.h".
 
-Make a .h filename from a .c filename.
+Make a .h file name from a .c file name.
 
 =cut
 
@@ -135,31 +140,15 @@ sub c_to_h_name
     return $h_file_name;
 }
 
-=head2 ch_files
-
-Make a .h filename from a .c filename. Back up both C and .h files.
-
-=cut
-
-sub ch_files
-{
-    my ($c_file_name) = @_;
-    if ($c_file_name !~ /\.c/) {
-	die "$c_file_name is not a C file name";
-    }
-    my $h_file_name = $c_file_name;
-    $h_file_name =~ s/\.c$/\.h/;
-    make_backup ($c_file_name);
-    make_backup ($h_file_name);
-    return $h_file_name;
-}
-
-# from http://crasseux.com/books/ctutorial/Reserved-words-in-C.html
+# This list of reserved words in C is from
+# http://crasseux.com/books/ctutorial/Reserved-words-in-C.html
 
 my @reserved_words = sort {length $b <=> length $a} qw/auto if break
 int case long char register continue return default short do sizeof
 double static else struct entry switch extern typedef float union for
 unsigned goto while enum void const signed volatile/;
+
+# A regular expression to match reserved words in C.
 
 my $reserved_words_re = join '|', @reserved_words;
 
@@ -167,12 +156,10 @@ my $reserved_words_re = join '|', @reserved_words;
 
     valid_c_variable ($variable_name);
 
-Returns 1 if $variable_name is a valid C variable, the undefined value
-otherwise.
+This returns 1 if C<$variable_name> is a valid C variable, the
+undefined value otherwise.
 
 =cut
-
-# BKB 2009-10-05 14:01:14
 
 sub valid_c_variable
 {
@@ -186,6 +173,15 @@ sub valid_c_variable
 
 # Wrapper name
 # BKB 2009-10-05 14:09:41
+
+=head2 wrapper_name
+
+    my $wrapper = wrapper_name ($file_name);
+
+Given a file name, return a suitable C preprocessor wrapper name based
+on the file name.
+
+=cut
 
 sub wrapper_name
 {
@@ -201,11 +197,18 @@ sub wrapper_name
     print_top_h_wrapper ($file_handle, $file_name);
     # Prints #ifndef wrapper at top of file.
 
-Print an include wrapper for a .h file.
+Print an "include wrapper" for a .h file to C<$file_handle>. For
+example,
+
+    #ifndef MY_FILE
+    #define MY_FILE
+
+The name of the wrapper comes from L</wrapper_name> applied to
+C<$file_name>.
+
+See also L</print_bottom_h_wrapper>.
 
 =cut
-
-# BKB 2009-10-05 14:08:53
 
 sub print_top_h_wrapper
 {
@@ -221,11 +224,15 @@ EOF
 
     print_bottom_h_wrapper ($file_handle, $file_name);
 
-Print an include wrapper for a .h file.
+Print the bottom part of an include wrapper for a .h file to
+C<$file_handle>.
+
+The name of the wrapper comes from L</wrapper_name> applied to
+C<$file_name>.
+
+See also L</print_top_h_wrapper>.
 
 =cut
-
-# BKB 2009-10-05 14:08:53
 
 sub print_bottom_h_wrapper
 {
@@ -240,7 +247,10 @@ EOF
 
     print_include ($file_handle, $file_name);
 
-Print an #include statement for a .h file
+Print an #include statement for a .h file named C<$file_name> to
+C<$file_handle>:
+
+    #include "file.h"
 
 =cut
 
@@ -254,13 +264,41 @@ EOF
 
 =head2 hash_to_c_file
 
-Output a hash as a set of const char * strings. This is to be used in
-things like a deployment of a C program which contains its own version
-as a string.
+    hash_to_c_file ($c_file_name, \%hash);
+
+Output a Perl hash as a set of const char * strings. For example,
+
+    hash_to_c_file ('my.c', { version => '0.01', author => 'Michael Caine' });
+
+prints
+
+    #include "my.h"
+    const char * version = "0.01";
+    const char * author = "Michael Caine";
+
+to F<my.c>, and 
+
+    #ifndef MY_H
+    #define MY_H
+    extern const char * version;
+    extern const char * author;
+    #endif
+
+to F<my.h>.
+
+The keys of the hash are checked with L</valid_c_variable>, and the
+routine dies if they are not valid C variable names.
+
+A third argument, C<$prefix>, contains an optional prefix to add to
+all the variable names:
+
+    hash_to_c_file ('that.c', {ok => 'yes'}, 'super_');
+
+prints
+
+    const char * super_ok = "yes";
 
 =cut
-
-# BKB 2009-10-05 13:38:58
 
 sub hash_to_c_file
 {
@@ -291,9 +329,12 @@ sub hash_to_c_file
 
      line_directive ($fh, 42, "file.x")
 
-!!!!! #line 42 "file.x"
+prints
 
-Print a C preprocessor #line directive to $fh.
+     #line 42 "file.x"
+
+This prints a C preprocessor line directive to the file specified by
+C<$fh>.
 
 =cut
 
@@ -310,7 +351,7 @@ sub line_directive
     brute_force_line ($input_file, $output_file);
 
 Put #line directives on every line of a file. This is a fix used to
-force line numbers into a file before it is processed by Template.
+force line numbers into a file before it is processed by L<Template>.
 
 =cut
 
@@ -331,8 +372,8 @@ sub brute_force_line
 
     my $text = add_lines ($file);
 
-Replace the string #line in the file with a C -style line directive
-before it is processed by Template.
+Replace strings of the form #line in the file specified by C<$file>
+with a C-style line directive before it is processed by L<Template>.
 
 =cut
 
@@ -358,6 +399,14 @@ sub add_lines
     return $text;
 }
 
+=head1 SEE ALSO
+
+=over
+
+=item L<C::Template>
+
+=back
+
 =head1 AUTHOR
 
 Ben Bullock, <bkb@cpan.org>
@@ -369,6 +418,5 @@ Bullock. They may be copied, used, modified and distributed under the
 same terms as the Perl programming language.
 
 =cut
-
 
 1;
