@@ -1,0 +1,15 @@
+Revision history for perl module C::Utility
+
+0.003 2013-11-27
+
+* Use "croak" instead of "die" for errors.
+* Add "ch_files" function.
+* Add "Changes".
+
+0.002 2012-04-19
+
+* Add "DESCRIPTION" section to documentation.
+* Better documentation.
+
+0.001 2012-04-14
+
