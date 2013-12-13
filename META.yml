@@ -19,7 +19,8 @@ no_index:
     - inc
 requires:
   File::Versions: 0
+  perl: 5.006001
 resources:
   bugtracker: https://github.com/benkasminbullock/C-Utility/issues
   repository: https://github.com/benkasminbullock/C-Utility
-version: 0.003
+version: 0.004

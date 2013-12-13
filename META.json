@@ -32,7 +32,8 @@
       },
       "runtime" : {
          "requires" : {
-            "File::Versions" : "0"
+            "File::Versions" : "0",
+            "perl" : "5.006001"
          }
       }
    },
@@ -45,5 +46,5 @@
          "url" : "https://github.com/benkasminbullock/C-Utility"
       }
    },
-   "version" : "0.003"
+   "version" : "0.004"
 }

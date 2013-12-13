@@ -22,6 +22,7 @@ require Exporter;
                    c_to_h_name
                    brute_force_line
                    add_lines
+		   remove_quotes
                /;
 
 %EXPORT_TAGS = (
@@ -31,7 +32,7 @@ require Exporter;
 use warnings;
 use strict;
 
-our $VERSION = '0.003';
+our $VERSION = '0.004';
 
 use Carp;
 use File::Spec;
@@ -436,6 +437,24 @@ sub add_lines
         }
     }
     return $text;
+}
+
+=head2 remove_quotes
+
+    my $unquoted_string = remove_quotes ($string);
+
+This removes the leading and trailing quotes from C<$string>. It also
+removes the "joining quotes" in composite C strings. Thus input of the
+form B<"composite " "C" " string"> is converted into B<composite C
+string> without the quotes.
+
+=cut
+
+sub remove_quotes
+{
+    my ($string) = @_;
+    $string =~ s/^"|"$|"\s*"//g;
+    return $string;
 }
 
 =head1 SEE ALSO

@@ -20,4 +20,6 @@ WriteMakefile (
             bugtracker => "$repo/issues",
         },
     },
+    # Passes 5.6.2 at CPANTESTERS as of version 0.003.
+    MIN_PERL_VERSION => '5.006001',
 );
