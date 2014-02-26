@@ -6,7 +6,7 @@
                                      |___/ 
 
 
-This is the README for C::Utility version 0.004.
+This is the README for C::Utility version 0.005.
 
 C::Utility is a "module" for the Perl computer programming language, a library
 of computer code to install on a computer.  This document contains four
@@ -50,6 +50,8 @@ using
 
 3. INSTALLATION
 
+This module requires Perl version 5.6.1 or later.
+
 To install the module from CPAN, use
 
     cpan C::Utility
@@ -58,11 +60,11 @@ If you have the App::cpanminus installer, you may prefer
 
     cpanm C::Utility
 
-To install the module from the source file, C-Utility-0.004.tar.gz, follow this
+To install the module from the source file, C-Utility-0.005.tar.gz, follow this
 sequence of commands:
 
-    tar xfz C-Utility-0.004.tar.gz
-    cd C-Utility-0.004
+    tar xfz C-Utility-0.005.tar.gz
+    cd C-Utility-0.005
     perl Makefile.PL
     make
     make install
@@ -87,6 +89,6 @@ repository on github at
 
 -----------------------------------------------------------------------------
 
-This README was written on Fri Dec 13 09:55:01 2013.
+This README was written on Wed Feb 26 13:43:03 2014.
 
 -----------------------------------------------------------------------------
